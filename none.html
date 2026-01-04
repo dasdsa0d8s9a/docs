@@ -23,12 +23,14 @@
       margin: 0 0 12px;
       font-size: 20px;
     }
-    .label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: #9aa3ff;
-      margin-bottom: 6px;
+    .note {
+      font-size: 13px;
+      color: #b6bdff;
+      background: #10132a;
+      border-left: 4px solid #6c7cff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-bottom: 14px;
     }
     button {
       background: linear-gradient(135deg, #5b7cfa, #8f6bff);
@@ -40,7 +42,7 @@
       font-size: 14px;
     }
     pre {
-      margin-top: 12px;
+      margin-top: 14px;
       background: #0b0e1a;
       padding: 16px;
       border-radius: 8px;
@@ -55,9 +57,14 @@
 <body>
   <div class="card">
     <h1>Heytap API Response</h1>
-    <button id="fetchBtn">Fetch Data</button>
 
-    <div class="label">encrypted data 1</div>
+    <div class="note">
+      The response is <strong>encrypted raw text</strong>.<br />
+      Copy the data below and decrypt it using your own tools.
+    </div>
+
+    <button id="fetchBtn">Fetch Encrypted Data</button>
+
     <pre id="output">Waiting for response…</pre>
   </div>
 
@@ -66,7 +73,7 @@
     const output = document.getElementById("output");
 
     btn.onclick = async () => {
-      output.textContent = "Loading...";
+      output.textContent = "Loading encrypted data...";
       try {
         const res = await fetch(
           "https://id-sg.heytap.com/uc/web/v1/user-info/query-basic",
@@ -96,8 +103,8 @@
           }
         );
 
-        const data = await res;
-        output.textContent = data;
+        const text = await res.text(); // RAW TEXT, NOT JSON
+        output.textContent = text;
       } catch (err) {
         output.textContent = "Error:\n" + err;
       }
