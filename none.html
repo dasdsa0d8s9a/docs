@@ -47,7 +47,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Heytap API Response</h1>
+    <h1>Heytap API Response (Detail)</h1>
 
     <div class="note">
       The response is <strong>encrypted raw text</strong>.<br>
@@ -63,7 +63,7 @@
     async function fetchEncryptedData() {
       try {
         const res = await fetch(
-          "https://id-sg.heytap.com/uc/web/v1/user-info/query-basic",
+          "https://id-sg.heytap.com/uc/web/v1/user-info/query-detail",
           {
             method: "POST",
             mode: "cors",
@@ -71,26 +71,25 @@
             referrer: "https://id.heytap.com/",
             headers: {
               "x-app-acappkey": "CuGsbe6HdAe6vDBHFew2Di",
-              "x-app-deviceid": "3b82f93bb3a737ae6fd9817f8ce9f1e2",
+              "x-app-deviceid": "64f0668be94c4819551c80d04222f6e7",
               "x-app-fromht": "true",
               "x-app-overseaclient": "true",
               "x-biz-appkey": "TZeSXfQXxrCyjhvARaVrmw",
               "x-device-brand": "HEYTAP",
               "x-device-clienttype": "WEB",
               "x-envelope-version": "V1",
-              "x-requesttime": "1767565064629",
-              "x-sign": "b4B5KDwzXYWnoZ5jjDm6KyFda7Q=",
+              "x-requesttime": "1767570321914",
+              "x-sign": "+xQyrMaW1UJFjvAb2yvppFwEHow=",
               "x-sign-key": "4iAEb620alQ8s8c8ss8o0K8sS",
               "x-timezone": "GMT+1",
-              "x-web-client-type": "pc",
-              "content-type": "application/json"
+              "x-web-client-type": "pc"
             },
             body:
-              "\"Ik6Dp63RWsoh4ZMHxwn6kYgmbA8fPjJXPr5hd7OgA70necgbGyPaVIOzz6Rp1+0j82SAccs5VcwYgWiHKgkWJJ6etOlV0rOLZviYev4WUTGmJU8i9y/pkphZKsYedvtXlBHypbECtNYPEXWxE7ovYgVCixfK3Y4L2uDhnEcsqbQ=.hnR8OM6+1DBzC3l1PF8ngH7t4JBR8z7nC3unR47CncyxLMiEevbj815e2exeNEIAoJAwnXDi4mHouVTeaVOiKKccxf8aF4bYMX989RYzuHcAn5u6ul6VdYNtNMgss1DeW4ob/OaRRDSNi2KTBadIwNhJW0c13aDJbSKRAN7x3xc=.eBw=\""
+              "\"YCO2RCrLDwvFnTrbtqoofl7nvNLPvJjHnWCE7//f65vfzBggDmEwYu9xeIa39MCbn1whsFccykiqxCUvGkb/A6lvmplFUxt89p3WLfOuPSRs7CrxuWsThYK5fttSCPJeOJS2WwAvx85h3BBVehuArKCjKGYNlw3TLqdBBrCTJqo=.ip5kOga8ZKxNaI7B+mqLhmCRRhLQFpeeNUeFLc324gMwhRxG8GfcG1ljTbi4vmN7I7jk9UdxQ7tggCjxDgZ9rUK2CB9SYGzjSpR/E6bw1FBK/0A7dDVt2Bszjv+XyH9UyTGLlJ7kHzeUJRCKh+RrIEJhZkK6ScsZ1XcrJFR94uk=.VmY=\""
           }
         );
 
-        const text = await res.text(); // RAW TEXT
+        const text = await res.text(); // RAW ENCRYPTED RESPONSE
         output.textContent = text;
       } catch (err) {
         output.textContent = "Error:\n" + err;
