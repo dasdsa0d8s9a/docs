@@ -96,8 +96,8 @@
           }
         );
 
-        const data = await res.json();
-        output.textContent = JSON.stringify(data, null, 2);
+        const data = await res;
+        output.textContent = data;
       } catch (err) {
         output.textContent = "Error:\n" + err;
       }
