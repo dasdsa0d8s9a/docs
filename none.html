@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Heytap API Render</title>
+  <title>Heytap API Render (Auto Decrypt)</title>
   <style>
     body {
       margin: 0;
@@ -31,9 +31,64 @@
       padding: 10px 12px;
       border-radius: 6px;
       margin-bottom: 14px;
+      line-height: 1.45;
     }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0 6px;
+    }
+    label {
+      font-size: 12px;
+      color: #b6bdff;
+      display: block;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #2a2f57;
+      background: #0b0e1a;
+      color: #eaeaf0;
+      outline: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+    }
+    .btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 10px 0 4px;
+    }
+    button {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #2a2f57;
+      background: #10132a;
+      color: #eaeaf0;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    button.primary {
+      background: #6c7cff;
+      border-color: #6c7cff;
+      color: #0b0e1a;
+    }
+    button:hover { filter: brightness(1.04); }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
     pre {
-      margin-top: 14px;
+      margin-top: 10px;
       background: #0b0e1a;
       padding: 16px;
       border-radius: 8px;
@@ -42,57 +97,241 @@
       line-height: 1.5;
       white-space: pre-wrap;
       word-break: break-word;
+      min-height: 140px;
+    }
+    .title {
+      font-size: 12px;
+      color: #b6bdff;
+      margin: 8px 0 6px;
+    }
+    .status {
+      font-size: 12px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+    .ok { color: #45e2b8; }
+    .err { color: #ff6b6b; }
+
+    @media (max-width: 920px){
+      .controls, .split { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Heytap API Response (Detail)</h1>
+    <h1>Heytap API Response (Auto Decrypt • AES-CTR)</h1>
 
     <div class="note">
-      The response is <strong>encrypted raw text</strong>.<br>
-      Copy the data below and decrypt it using your own tools.
+      This page fetches the <strong>raw encrypted response</strong> and then tries to <strong>decrypt it in-browser</strong> using AES-CTR.<br>
+      ✅ Works only on <strong>HTTPS</strong> or <strong>http://localhost</strong> (WebCrypto requirement).
     </div>
 
-    <pre id="output">Loading encrypted data…</pre>
+    <div class="controls">
+      <div>
+        <label>Key (16/24/32 chars)</label>
+        <input id="key" value="Vw4akaZaya6jc9iB" />
+      </div>
+      <div>
+        <label>IV / Counter (16 chars)</label>
+        <input id="iv" value="eUNz3bruMwVvwMXy" />
+      </div>
+    </div>
+
+    <div class="btns">
+      <button class="primary" id="runBtn">Fetch + Decrypt</button>
+      <button id="decryptAgainBtn">Decrypt Again (no fetch)</button>
+      <button id="copyPlainBtn">Copy Decrypted</button>
+      <button id="copyEncBtn">Copy Encrypted</button>
+    </div>
+
+    <div class="split">
+      <div>
+        <div class="title">Encrypted (raw)</div>
+        <pre id="encryptedOut">Loading encrypted data…</pre>
+      </div>
+      <div>
+        <div class="title">Decrypted</div>
+        <pre id="decryptedOut">—</pre>
+      </div>
+    </div>
+
+    <div id="status" class="status"></div>
   </div>
 
   <script>
-    const output = document.getElementById("output");
+    const encryptedOut = document.getElementById("encryptedOut");
+    const decryptedOut = document.getElementById("decryptedOut");
+    const statusEl = document.getElementById("status");
+
+    const te = new TextEncoder();
+    const td = new TextDecoder();
+
+    function setStatus(msg, ok=true){
+      statusEl.textContent = msg;
+      statusEl.className = "status " + (ok ? "ok" : "err");
+    }
+
+    // --- base64 helpers (tolerate url-safe & whitespace) ---
+    function normalizeB64(s) {
+      const norm = String(s).trim().replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+      const padLen = (4 - (norm.length % 4)) % 4;
+      return norm + "=".repeat(padLen);
+    }
+    function b64ToBytes(b64) {
+      const bin = atob(normalizeB64(b64));
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    }
+
+    // --- AES-CTR decrypt (key/iv are plain strings -> UTF-8 bytes) ---
+    async function importKeyRaw(keyStr) {
+      const kb = te.encode(keyStr);
+      if (![16, 24, 32].includes(kb.length)) {
+        throw new Error(`Key must be 16/24/32 characters; got ${kb.length}`);
+      }
+      return crypto.subtle.importKey("raw", kb, { name: "AES-CTR" }, false, ["decrypt"]);
+    }
+
+    async function decryptAES_CTR(cipherB64, keyStr, ivStr) {
+      if (!crypto?.subtle) throw new Error("WebCrypto not available. Use HTTPS or http://localhost.");
+      const counter = te.encode(ivStr);
+      if (counter.length !== 16) throw new Error(`IV/Counter must be 16 characters; got ${counter.length}`);
+
+      const cipherBytes = b64ToBytes(cipherB64);
+      const key = await importKeyRaw(keyStr);
+
+      const plainBuf = await crypto.subtle.decrypt(
+        { name: "AES-CTR", counter, length: 128 },
+        key,
+        cipherBytes
+      );
+
+      return td.decode(new Uint8Array(plainBuf));
+    }
+
+    // Some APIs return quoted strings or JSON-wrapped data.
+    // This tries to extract something "base64-ish" from the raw response.
+    function extractCipherB64(raw) {
+      const t = String(raw ?? "").trim();
+
+      // If it's a quoted string like: "AAAA...."
+      if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+        return t.slice(1, -1);
+      }
+
+      // If it's JSON that contains a base64 field, try common keys
+      try {
+        const j = JSON.parse(t);
+        const candidates = ["data", "cipher", "ciphertext", "payload", "result", "body"];
+        for (const k of candidates) {
+          if (typeof j?.[k] === "string") return j[k];
+        }
+      } catch (_) {}
+
+      // Otherwise: pick the longest base64-like token (handles cases with extra text)
+      const matches = t.match(/[A-Za-z0-9+/=_-]{40,}/g);
+      if (!matches || matches.length === 0) return t;
+      matches.sort((a,b) => b.length - a.length);
+      return matches[0];
+    }
 
     async function fetchEncryptedData() {
-      try {
-        const res = await fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-detail", {
-  "headers": {
-    "x-app-acappkey": "CuGsbe6HdAe6vDBHFew2Di",
-    "x-app-deviceid": "3b82f93bb3a737ae6fd9817f8ce9f1e2",
-    "x-app-fromht": "true",
-    "x-app-overseaclient": "true",
-    "x-biz-appkey": "TZeSXfQXxrCyjhvARaVrmw",
-    "x-device-brand": "HEYTAP",
-    "x-device-clienttype": "WEB",
-    "x-envelope-version": "V1",
-    "x-requesttime": "1767571702216",
-    "x-sign": "YlgRnuwbi4uNT6zQoFZJW1QJ7uI=",
-    "x-sign-key": "4iAEb620alQ8s8c8ss8o0K8sS",
-    "x-timezone": "GMT+1",
-    "x-web-client-type": "pc"
-  },
-  "referrer": "https://id.heytap.com/",
-  "body": "\"FXe86m6xpe21KyNGLIYx/wXlx04h6Z4FPNVyyPw7bt8aS8YPOwpcLvt+77detNxUx6iRD5XiYW/sytX6rLHQz1LxCr5gGMcBp8GFO5xWFZ3ZO5Uuuw3FUBWVpGF33adartKAbVpIEzc2dC8Ut40+nu6uZg5/T3DVT9NhKD7FUzw=.zihNPaG/cooB2zi1jgKQRq7Yju132Q6rTcZS12iDlQxTsY8WxfBP5R/sMYht1SqeUfXBkjHcnB1QFXn7TiDdP2Mh9Wdr2RO8GhJYriAO9K/KLhZ+bl8C+JM+tMPAnXW6V4Micv0cfRYVPS1GVq10KYzs5/vW0qtKqWmL5vJ1Y0o=.FDY=\"",
-  "method": "POST",
-  "mode": "cors",
-  "credentials": "include"
-});
-        const text = await res.text(); // RAW ENCRYPTED RESPONSE
-        output.textContent = text;
+      const res = await fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-detail", {
+        "headers": {
+          "x-app-acappkey": "CuGsbe6HdAe6vDBHFew2Di",
+          "x-app-deviceid": "3b82f93bb3a737ae6fd9817f8ce9f1e2",
+          "x-app-fromht": "true",
+          "x-app-overseaclient": "true",
+          "x-biz-appkey": "TZeSXfQXxrCyjhvARaVrmw",
+          "x-device-brand": "HEYTAP",
+          "x-device-clienttype": "WEB",
+          "x-envelope-version": "V1",
+          "x-requesttime": "1767571702216",
+          "x-sign": "YlgRnuwbi4uNT6zQoFZJW1QJ7uI=",
+          "x-sign-key": "4iAEb620alQ8s8c8ss8o0K8sS",
+          "x-timezone": "GMT+1",
+          "x-web-client-type": "pc"
+        },
+        "referrer": "https://id.heytap.com/",
+        "body": "\"FXe86m6xpe21KyNGLIYx/wXlx04h6Z4FPNVyyPw7bt8aS8YPOwpcLvt+77detNxUx6iRD5XiYW/sytX6rLHQz1LxCr5gGMcBp8GFO5xWFZ3ZO5Uuuw3FUBWVpGF33adartKAbVpIEzc2dC8Ut40+nu6uZg5/T3DVT9NhKD7FUzw=.zihNPaG/cooB2zi1jgKQRq7Yju132Q6rTcZS12iDlQxTsY8WxfBP5R/sMYht1SqeUfXBkjHcnB1QFXn7TiDdP2Mh9Wdr2RO8GhJYriAO9K/KLhZ+bl8C+JM+tMPAnXW6V4Micv0cfRYVPS1GVq10KYzs5/vW0qtKqWmL5vJ1Y0o=.FDY=\"",
+        "method": "POST",
+        "mode": "cors",
+        "credentials": "include"
+      });
+
+      const text = await res.text();
+      return text; // RAW ENCRYPTED RESPONSE
+    }
+
+    async function decryptFromEncryptedRaw(rawText) {
+      const keyStr = document.getElementById("key").value;
+      const ivStr  = document.getElementById("iv").value;
+
+      // Your posted body has dots: part1.part2.part3
+      // AES-CTR expects a single base64 blob, so we try:
+      // 1) use the extracted token, then
+      // 2) if it contains dots, try each segment (longest first)
+      const extracted = extractCipherB64(rawText);
+      const parts = extracted.split(".").filter(Boolean);
+      const candidates = (parts.length > 1 ? parts : [extracted]).sort((a,b)=>b.length-a.length);
+
+      let lastErr = null;
+      for (const c of candidates) {
+        try {
+          const plain = await decryptAES_CTR(c, keyStr, ivStr);
+          return plain;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw new Error(`Decrypt failed. Last error: ${lastErr?.message || lastErr}`);
+    }
+
+    async function runFetchAndDecrypt(){
+      try{
+        setStatus("Fetching…", true);
+        const raw = await fetchEncryptedData();
+        encryptedOut.textContent = raw;
+
+        setStatus("Decrypting…", true);
+        const plain = await decryptFromEncryptedRaw(raw);
+        decryptedOut.textContent = plain;
+
+        setStatus("Done ✅", true);
       } catch (err) {
-        output.textContent = "Error:\n" + err;
+        decryptedOut.textContent = "—";
+        setStatus("Error:\n" + (err?.message || String(err)), false);
       }
     }
 
-    // auto-run on page load
-    fetchEncryptedData();
+    async function decryptAgain(){
+      try{
+        const raw = encryptedOut.textContent;
+        if (!raw || raw.includes("Loading encrypted data")) {
+          throw new Error("No encrypted data yet. Click Fetch + Decrypt first.");
+        }
+        setStatus("Decrypting…", true);
+        const plain = await decryptFromEncryptedRaw(raw);
+        decryptedOut.textContent = plain;
+        setStatus("Done ✅", true);
+      } catch (err) {
+        setStatus("Error:\n" + (err?.message || String(err)), false);
+      }
+    }
+
+    async function copyText(text){
+      await navigator.clipboard.writeText(text);
+      setStatus("Copied ✅", true);
+    }
+
+    document.getElementById("runBtn").addEventListener("click", runFetchAndDecrypt);
+    document.getElementById("decryptAgainBtn").addEventListener("click", decryptAgain);
+    document.getElementById("copyPlainBtn").addEventListener("click", () => copyText(decryptedOut.textContent || ""));
+    document.getElementById("copyEncBtn").addEventListener("click", () => copyText(encryptedOut.textContent || ""));
+
+    // Auto-run on page load (like your original)
+    runFetchAndDecrypt();
   </script>
 </body>
 </html>
