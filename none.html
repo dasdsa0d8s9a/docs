@@ -62,33 +62,28 @@
 
     async function fetchEncryptedData() {
       try {
-        const res = await fetch(
-          "https://id-sg.heytap.com/uc/web/v1/user-info/query-detail",
-          {
-            method: "POST",
-            mode: "cors",
-            credentials: "include",
-            referrer: "https://id.heytap.com/",
-            headers: {
-              "x-app-acappkey": "CuGsbe6HdAe6vDBHFew2Di",
-              "x-app-deviceid": "64f0668be94c4819551c80d04222f6e7",
-              "x-app-fromht": "true",
-              "x-app-overseaclient": "true",
-              "x-biz-appkey": "TZeSXfQXxrCyjhvARaVrmw",
-              "x-device-brand": "HEYTAP",
-              "x-device-clienttype": "WEB",
-              "x-envelope-version": "V1",
-              "x-requesttime": "1767570321914",
-              "x-sign": "+xQyrMaW1UJFjvAb2yvppFwEHow=",
-              "x-sign-key": "4iAEb620alQ8s8c8ss8o0K8sS",
-              "x-timezone": "GMT+1",
-              "x-web-client-type": "pc"
-            },
-            body:
-              "\"YCO2RCrLDwvFnTrbtqoofl7nvNLPvJjHnWCE7//f65vfzBggDmEwYu9xeIa39MCbn1whsFccykiqxCUvGkb/A6lvmplFUxt89p3WLfOuPSRs7CrxuWsThYK5fttSCPJeOJS2WwAvx85h3BBVehuArKCjKGYNlw3TLqdBBrCTJqo=.ip5kOga8ZKxNaI7B+mqLhmCRRhLQFpeeNUeFLc324gMwhRxG8GfcG1ljTbi4vmN7I7jk9UdxQ7tggCjxDgZ9rUK2CB9SYGzjSpR/E6bw1FBK/0A7dDVt2Bszjv+XyH9UyTGLlJ7kHzeUJRCKh+RrIEJhZkK6ScsZ1XcrJFR94uk=.VmY=\""
-          }
-        );
-
+        const res = await fetch("https://id-sg.heytap.com/uc/web/v1/user-info/query-detail", {
+  "headers": {
+    "x-app-acappkey": "CuGsbe6HdAe6vDBHFew2Di",
+    "x-app-deviceid": "3b82f93bb3a737ae6fd9817f8ce9f1e2",
+    "x-app-fromht": "true",
+    "x-app-overseaclient": "true",
+    "x-biz-appkey": "TZeSXfQXxrCyjhvARaVrmw",
+    "x-device-brand": "HEYTAP",
+    "x-device-clienttype": "WEB",
+    "x-envelope-version": "V1",
+    "x-requesttime": "1767571702216",
+    "x-sign": "YlgRnuwbi4uNT6zQoFZJW1QJ7uI=",
+    "x-sign-key": "4iAEb620alQ8s8c8ss8o0K8sS",
+    "x-timezone": "GMT+1",
+    "x-web-client-type": "pc"
+  },
+  "referrer": "https://id.heytap.com/",
+  "body": "\"FXe86m6xpe21KyNGLIYx/wXlx04h6Z4FPNVyyPw7bt8aS8YPOwpcLvt+77detNxUx6iRD5XiYW/sytX6rLHQz1LxCr5gGMcBp8GFO5xWFZ3ZO5Uuuw3FUBWVpGF33adartKAbVpIEzc2dC8Ut40+nu6uZg5/T3DVT9NhKD7FUzw=.zihNPaG/cooB2zi1jgKQRq7Yju132Q6rTcZS12iDlQxTsY8WxfBP5R/sMYht1SqeUfXBkjHcnB1QFXn7TiDdP2Mh9Wdr2RO8GhJYriAO9K/KLhZ+bl8C+JM+tMPAnXW6V4Micv0cfRYVPS1GVq10KYzs5/vW0qtKqWmL5vJ1Y0o=.FDY=\"",
+  "method": "POST",
+  "mode": "cors",
+  "credentials": "include"
+});
         const text = await res.text(); // RAW ENCRYPTED RESPONSE
         output.textContent = text;
       } catch (err) {
