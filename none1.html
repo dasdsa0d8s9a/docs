@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple AES Encrypt/Decrypt</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:20px;max-width:900px}
+    input,textarea,select,button{width:100%;padding:10px;margin:6px 0;box-sizing:border-box}
+    textarea{min-height:120px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    button{cursor:pointer}
+    small{color:#555}
+    #msg{white-space:pre-wrap;margin-top:8px}
+  </style>
+</head>
+<body>
+  <h2>🔐 Simple AES Encrypt/Decrypt</h2>
+  <small>Key: 16/24/32 chars • IV: 16 chars • Runs on HTTPS or localhost</small>
+
+  <label>Mode</label>
+  <select id="mode">
+    <option value="cbc">AES-CBC</option>
+    <option value="ctr">AES-CTR</option>
+  </select>
+
+  <label>Key</label>
+  <input id="key" value="Vw4akaZaya6jc9iB" />
+
+  <label>IV (or CTR counter)</label>
+  <input id="iv" value="eUNz3bruMwVvwMXy" />
+
+  <div class="row">
+    <div>
+      <label>Plaintext</label>
+      <textarea id="plain" placeholder="Type text..."></textarea>
+      <button onclick="encryptNow()">Encrypt →</button>
+    </div>
+
+    <div>
+      <label>Ciphertext (Base64)</label>
+      <textarea id="cipher" placeholder="Base64..."></textarea>
+      <button onclick="decryptNow()">Decrypt →</button>
+    </div>
+  </div>
+
+  <div id="msg"></div>
+
+<script>
+const te = new TextEncoder();
+const td = new TextDecoder();
+
+function show(msg, isErr=false){
+  const el = document.getElementById("msg");
+  el.style.color = isErr ? "crimson" : "green";
+  el.textContent = msg;
+}
+
+function bytesToB64(bytes){
+  let bin = "";
+  for (let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function b64ToBytes(b64){
+  b64 = String(b64).trim().replace(/\s+/g,"").replace(/-/g,"+").replace(/_/g,"/");
+  b64 += "=".repeat((4 - (b64.length % 4)) % 4);
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function pkcs7Pad(bytes){
+  const pad = 16 - (bytes.length % 16 || 16);
+  const out = new Uint8Array(bytes.length + pad);
+  out.set(bytes);
+  out.fill(pad, bytes.length);
+  return out;
+}
+function pkcs7Unpad(bytes){
+  const pad = bytes[bytes.length-1];
+  if (pad < 1 || pad > 16) return bytes;
+  for (let i = bytes.length - pad; i < bytes.length; i++){
+    if (bytes[i] !== pad) return bytes;
+  }
+  return bytes.slice(0, bytes.length - pad);
+}
+
+async function importKeyRaw(keyStr, algName, usage){
+  const kb = te.encode(keyStr);
+  if (![16,24,32].includes(kb.length)) throw new Error("Key must be 16/24/32 characters.");
+  return crypto.subtle.importKey("raw", kb, {name: algName}, false, [usage]);
+}
+
+async function encryptNow(){
+  try{
+    if (!crypto?.subtle) throw new Error("WebCrypto not available. Use HTTPS or localhost.");
+    const mode = document.getElementById("mode").value;
+    const keyStr = document.getElementById("key").value;
+    const ivStr  = document.getElementById("iv").value;
+    const plain  = document.getElementById("plain").value;
+
+    const iv = te.encode(ivStr);
+    if (iv.length !== 16) throw new Error("IV must be exactly 16 characters.");
+
+    let cipherBytes;
+
+    if (mode === "cbc"){
+      const key = await importKeyRaw(keyStr, "AES-CBC", "encrypt");
+      const padded = pkcs7Pad(te.encode(plain));
+      const buf = await crypto.subtle.encrypt({name:"AES-CBC", iv}, key, padded);
+      cipherBytes = new Uint8Array(buf);
+    } else {
+      const key = await importKeyRaw(keyStr, "AES-CTR", "encrypt");
+      const buf = await crypto.subtle.encrypt({name:"AES-CTR", counter: iv, length:128}, key, te.encode(plain));
+      cipherBytes = new Uint8Array(buf);
+    }
+
+    document.getElementById("cipher").value = bytesToB64(cipherBytes);
+    show("Encrypted ✅");
+  } catch(e){
+    show(e.message || String(e), true);
+  }
+}
+
+async function decryptNow(){
+  try{
+    if (!crypto?.subtle) throw new Error("WebCrypto not available. Use HTTPS or localhost.");
+    const mode = document.getElementById("mode").value;
+    const keyStr = document.getElementById("key").value;
+    const ivStr  = document.getElementById("iv").value;
+    const cipherB64 = document.getElementById("cipher").value;
+
+    const iv = te.encode(ivStr);
+    if (iv.length !== 16) throw new Error("IV must be exactly 16 characters.");
+
+    const cipherBytes = b64ToBytes(cipherB64);
+
+    let plain;
+
+    if (mode === "cbc"){
+      if (cipherBytes.length % 16 !== 0) throw new Error("CBC ciphertext length must be multiple of 16.");
+      const key = await importKeyRaw(keyStr, "AES-CBC", "decrypt");
+      const buf = await crypto.subtle.decrypt({name:"AES-CBC", iv}, key, cipherBytes);
+      plain = td.decode(pkcs7Unpad(new Uint8Array(buf)));
+    } else {
+      const key = await importKeyRaw(keyStr, "AES-CTR", "decrypt");
+      const buf = await crypto.subtle.decrypt({name:"AES-CTR", counter: iv, length:128}, key, cipherBytes);
+      plain = td.decode(new Uint8Array(buf));
+    }
+
+    document.getElementById("plain").value = plain;
+    show("Decrypted ✅");
+  } catch(e){
+    show(e.message || String(e), true);
+  }
+}
+</script>
+</body>
+</html>
