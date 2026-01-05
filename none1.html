@@ -1,160 +1,187 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Simple AES Encrypt/Decrypt</title>
+  <title>AES-CTR Encrypt / Decrypt</title>
   <style>
-    body{font-family:system-ui,Arial;margin:20px;max-width:900px}
-    input,textarea,select,button{width:100%;padding:10px;margin:6px 0;box-sizing:border-box}
-    textarea{min-height:120px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    button{cursor:pointer}
-    small{color:#555}
-    #msg{white-space:pre-wrap;margin-top:8px}
+    :root{
+      --bg:#0b1020; --card:#111a33; --ink:#eef2ff; --muted:#a7b0d6;
+      --line:#26335f; --btn:#4f7cff; --btn2:#223058; --bad:#ff6b6b; --ok:#38d39f;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:28px; background:radial-gradient(900px 500px at 20% 0%, #18275a 0%, var(--bg) 55%);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink);
+    }
+    .wrap{max-width:980px; margin:0 auto}
+    h1{margin:0 0 6px; font-size:20px}
+    .sub{color:var(--muted); font-size:13px; margin:0 0 18px}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line); border-radius:16px; padding:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.35);
+    }
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px}
+    label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px}
+    input,textarea{
+      width:100%; padding:11px 12px; border-radius:12px;
+      border:1px solid var(--line); background:#0b1430; color:var(--ink);
+      outline:none;
+    }
+    textarea{min-height:180px; resize:vertical; font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+    input{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+    .btns{display:flex; gap:10px; margin-top:10px; flex-wrap:wrap}
+    button{
+      border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+      background:var(--btn2); color:var(--ink); cursor:pointer; font-weight:600;
+    }
+    button.primary{background:var(--btn); border-color:#345fff}
+    button:hover{filter:brightness(1.05)}
+    .status{margin-top:10px; font-size:13px; white-space:pre-wrap}
+    .ok{color:var(--ok)}
+    .bad{color:var(--bad)}
+    .hint{color:var(--muted); font-size:12px; margin-top:10px; line-height:1.35}
+    @media (max-width: 860px){ .grid,.row{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
-  <h2>🔐 Simple AES Encrypt/Decrypt</h2>
-  <small>Key: 16/24/32 chars • IV: 16 chars • Runs on HTTPS or localhost</small>
+  <div class="wrap">
+    <h1>🔐 AES-CTR Encrypt / Decrypt</h1>
+    <p class="sub">Paste text to encrypt, or paste Base64 to decrypt. (Key = 16/24/32 chars, IV/Counter = 16 chars)</p>
 
-  <label>Mode</label>
-  <select id="mode">
-    <option value="cbc">AES-CBC</option>
-    <option value="ctr">AES-CTR</option>
-  </select>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Key (16/24/32 chars)</label>
+          <input id="key" value="Vw4akaZaya6jc9iB" />
+        </div>
+        <div>
+          <label>IV / Counter (16 chars)</label>
+          <input id="iv" value="eUNz3bruMwVvwMXy" />
+        </div>
+      </div>
 
-  <label>Key</label>
-  <input id="key" value="Vw4akaZaya6jc9iB" />
+      <div class="grid">
+        <div>
+          <label>Plaintext</label>
+          <textarea id="plain" placeholder="Type or paste your data here..."></textarea>
+          <div class="btns">
+            <button class="primary" id="encBtn">Encrypt →</button>
+            <button id="copyPlain">Copy</button>
+            <button id="clearPlain">Clear</button>
+          </div>
+        </div>
 
-  <label>IV (or CTR counter)</label>
-  <input id="iv" value="eUNz3bruMwVvwMXy" />
+        <div>
+          <label>Ciphertext (Base64)</label>
+          <textarea id="cipher" placeholder="Paste Base64 here to decrypt..."></textarea>
+          <div class="btns">
+            <button class="primary" id="decBtn">Decrypt →</button>
+            <button id="copyCipher">Copy</button>
+            <button id="clearCipher">Clear</button>
+          </div>
+        </div>
+      </div>
 
-  <div class="row">
-    <div>
-      <label>Plaintext</label>
-      <textarea id="plain" placeholder="Type text..."></textarea>
-      <button onclick="encryptNow()">Encrypt →</button>
-    </div>
-
-    <div>
-      <label>Ciphertext (Base64)</label>
-      <textarea id="cipher" placeholder="Base64..."></textarea>
-      <button onclick="decryptNow()">Decrypt →</button>
+      <div id="status" class="status"></div>
+      <div class="hint">
+        Note: WebCrypto works only on <b>HTTPS</b> or <b>http://localhost</b>.  
+        Also: reusing the same IV/counter with the same key is unsafe for CTR—ideally use a new random one per message.
+      </div>
     </div>
   </div>
 
-  <div id="msg"></div>
-
 <script>
-const te = new TextEncoder();
-const td = new TextDecoder();
+(() => {
+  const te = new TextEncoder();
+  const td = new TextDecoder();
 
-function show(msg, isErr=false){
-  const el = document.getElementById("msg");
-  el.style.color = isErr ? "crimson" : "green";
-  el.textContent = msg;
-}
+  const $ = (id) => document.getElementById(id);
+  const statusEl = $("status");
 
-function bytesToB64(bytes){
-  let bin = "";
-  for (let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
-function b64ToBytes(b64){
-  b64 = String(b64).trim().replace(/\s+/g,"").replace(/-/g,"+").replace(/_/g,"/");
-  b64 += "=".repeat((4 - (b64.length % 4)) % 4);
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-function pkcs7Pad(bytes){
-  const pad = 16 - (bytes.length % 16 || 16);
-  const out = new Uint8Array(bytes.length + pad);
-  out.set(bytes);
-  out.fill(pad, bytes.length);
-  return out;
-}
-function pkcs7Unpad(bytes){
-  const pad = bytes[bytes.length-1];
-  if (pad < 1 || pad > 16) return bytes;
-  for (let i = bytes.length - pad; i < bytes.length; i++){
-    if (bytes[i] !== pad) return bytes;
+  function setStatus(msg, ok=true){
+    statusEl.textContent = msg;
+    statusEl.className = "status " + (ok ? "ok" : "bad");
   }
-  return bytes.slice(0, bytes.length - pad);
-}
 
-async function importKeyRaw(keyStr, algName, usage){
-  const kb = te.encode(keyStr);
-  if (![16,24,32].includes(kb.length)) throw new Error("Key must be 16/24/32 characters.");
-  return crypto.subtle.importKey("raw", kb, {name: algName}, false, [usage]);
-}
+  function normalizeB64(s){
+    const norm = String(s).trim().replace(/\s+/g,"").replace(/-/g,"+").replace(/_/g,"/");
+    const padLen = (4 - (norm.length % 4)) % 4;
+    return norm + "=".repeat(padLen);
+  }
 
-async function encryptNow(){
-  try{
-    if (!crypto?.subtle) throw new Error("WebCrypto not available. Use HTTPS or localhost.");
-    const mode = document.getElementById("mode").value;
-    const keyStr = document.getElementById("key").value;
-    const ivStr  = document.getElementById("iv").value;
-    const plain  = document.getElementById("plain").value;
+  function b64ToBytes(b64){
+    const bin = atob(normalizeB64(b64));
+    const out = new Uint8Array(bin.length);
+    for (let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
 
-    const iv = te.encode(ivStr);
-    if (iv.length !== 16) throw new Error("IV must be exactly 16 characters.");
+  function bytesToB64(bytes){
+    let bin = "";
+    for (let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
 
-    let cipherBytes;
-
-    if (mode === "cbc"){
-      const key = await importKeyRaw(keyStr, "AES-CBC", "encrypt");
-      const padded = pkcs7Pad(te.encode(plain));
-      const buf = await crypto.subtle.encrypt({name:"AES-CBC", iv}, key, padded);
-      cipherBytes = new Uint8Array(buf);
-    } else {
-      const key = await importKeyRaw(keyStr, "AES-CTR", "encrypt");
-      const buf = await crypto.subtle.encrypt({name:"AES-CTR", counter: iv, length:128}, key, te.encode(plain));
-      cipherBytes = new Uint8Array(buf);
+  async function importKeyRaw(keyStr, usage){
+    const kb = te.encode(keyStr);
+    if (![16,24,32].includes(kb.length)) {
+      throw new Error(`Key must be 16/24/32 characters (got ${kb.length}).`);
     }
-
-    document.getElementById("cipher").value = bytesToB64(cipherBytes);
-    show("Encrypted ✅");
-  } catch(e){
-    show(e.message || String(e), true);
+    return crypto.subtle.importKey("raw", kb, { name:"AES-CTR" }, false, [usage]);
   }
-}
 
-async function decryptNow(){
-  try{
-    if (!crypto?.subtle) throw new Error("WebCrypto not available. Use HTTPS or localhost.");
-    const mode = document.getElementById("mode").value;
-    const keyStr = document.getElementById("key").value;
-    const ivStr  = document.getElementById("iv").value;
-    const cipherB64 = document.getElementById("cipher").value;
+  function readKeyIv(){
+    if (!crypto?.subtle) throw new Error("WebCrypto not available. Use HTTPS or http://localhost.");
+    const keyStr = $("key").value;
+    const ivStr  = $("iv").value;
+    const counter = te.encode(ivStr);
+    if (counter.length !== 16) throw new Error(`IV/Counter must be exactly 16 characters (got ${counter.length}).`);
+    return { keyStr, counter };
+  }
 
-    const iv = te.encode(ivStr);
-    if (iv.length !== 16) throw new Error("IV must be exactly 16 characters.");
+  async function encryptCTR(){
+    const { keyStr, counter } = readKeyIv();
+    const plain = $("plain").value;
+    const key = await importKeyRaw(keyStr, "encrypt");
+    const buf = await crypto.subtle.encrypt({ name:"AES-CTR", counter, length:128 }, key, te.encode(plain));
+    $("cipher").value = bytesToB64(new Uint8Array(buf));
+    setStatus("Encrypted ✅");
+  }
 
+  async function decryptCTR(){
+    const { keyStr, counter } = readKeyIv();
+    const cipherB64 = $("cipher").value;
     const cipherBytes = b64ToBytes(cipherB64);
-
-    let plain;
-
-    if (mode === "cbc"){
-      if (cipherBytes.length % 16 !== 0) throw new Error("CBC ciphertext length must be multiple of 16.");
-      const key = await importKeyRaw(keyStr, "AES-CBC", "decrypt");
-      const buf = await crypto.subtle.decrypt({name:"AES-CBC", iv}, key, cipherBytes);
-      plain = td.decode(pkcs7Unpad(new Uint8Array(buf)));
-    } else {
-      const key = await importKeyRaw(keyStr, "AES-CTR", "decrypt");
-      const buf = await crypto.subtle.decrypt({name:"AES-CTR", counter: iv, length:128}, key, cipherBytes);
-      plain = td.decode(new Uint8Array(buf));
-    }
-
-    document.getElementById("plain").value = plain;
-    show("Decrypted ✅");
-  } catch(e){
-    show(e.message || String(e), true);
+    const key = await importKeyRaw(keyStr, "decrypt");
+    const buf = await crypto.subtle.decrypt({ name:"AES-CTR", counter, length:128 }, key, cipherBytes);
+    $("plain").value = td.decode(new Uint8Array(buf));
+    setStatus("Decrypted ✅");
   }
-}
+
+  async function copyFrom(id){
+    const val = $(id).value;
+    await navigator.clipboard.writeText(val);
+    setStatus("Copied ✅");
+  }
+
+  $("encBtn").addEventListener("click", async () => {
+    try { await encryptCTR(); } catch(e){ setStatus(e.message || String(e), false); }
+  });
+  $("decBtn").addEventListener("click", async () => {
+    try { await decryptCTR(); } catch(e){ setStatus(e.message || String(e), false); }
+  });
+
+  $("copyPlain").addEventListener("click", () => copyFrom("plain").catch(e=>setStatus(String(e),false)));
+  $("copyCipher").addEventListener("click", () => copyFrom("cipher").catch(e=>setStatus(String(e),false)));
+
+  $("clearPlain").addEventListener("click", () => { $("plain").value=""; setStatus("Cleared plaintext."); });
+  $("clearCipher").addEventListener("click", () => { $("cipher").value=""; setStatus("Cleared ciphertext."); });
+
+  setStatus("Ready ✅");
+})();
 </script>
 </body>
 </html>
