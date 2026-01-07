@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Payload Transformer</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h2 { color: #569cd6; }
+        label { display: block; margin-top: 15px; margin-bottom: 5px; color: #9cdcfe; }
+        textarea {
+            width: 100%;
+            height: 150px;
+            background-color: #252526;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+        }
+        button {
+            background-color: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #1177bb; }
+        .output-group {
+            margin-top: 20px;
+            border-top: 1px solid #3e3e42;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Fetch Payload Transformer & Encoder</h2>
+    <p>Paste the full <code>fetch(...)</code> code below.</p>
+
+    <label for="inputCode">Input Code:</label>
+    <textarea id="inputCode" placeholder='fetch("https://www.temu.com/api/bg/sigerus/account/third_party/bind", { ... });'></textarea>
+
+    <button onclick="transformPayload()">Transform, Minify & Encode</button>
+
+    <div class="output-group">
+        <label for="minifiedCode">Step 1: Transformed & Minified Code (Preview)</label>
+        <textarea id="minifiedCode" readonly></textarea>
+
+        <label for="base64Code">Step 2: Base64 Encoded (Final Payload)</label>
+        <textarea id="base64Code" readonly></textarea>
+        <button onclick="copyBase64()" style="background-color: #2d2d30; border: 1px solid #569cd6;">Copy Base64</button>
+    </div>
+
+    <script>
+        function transformPayload() {
+            const input = document.getElementById('inputCode').value.trim();
+            
+            if (!input) {
+                alert("Please paste the fetch code first.");
+                return;
+            }
+
+            try {
+                // 1. Parse the input string into real JS objects
+                // We create a mock 'fetch' function to capture the arguments passed by the user's code
+                let capturedUrl = '';
+                let capturedOptions = {};
+
+                const mockFetch = (url, options) => {
+                    capturedUrl = url;
+                    capturedOptions = options || {};
+                };
+
+                // Execute the string in a safe function scope to parse it
+                const func = new Function('fetch', input);
+                func(mockFetch);
+
+                // 2. Perform Transformations
+                if (capturedOptions.headers) {
+                    // Remove specific headers
+                    delete capturedOptions.headers['x-document-referer'];
+                    delete capturedOptions.headers['x-phan-data'];
+                }
+
+                // Change credentials to include (Critical for CSRF)
+                capturedOptions.credentials = 'include';
+                
+                // Ensure mode is cors (usually default but good to be explicit)
+                capturedOptions.mode = 'cors';
+
+                // 3. Minify
+                // JSON.stringify automatically removes all whitespace when no spacer argument is given
+                const minifiedOptions = JSON.stringify(capturedOptions);
+                const minifiedCode = `fetch("${capturedUrl}",${minifiedOptions})`;
+
+                // 4. Base64 Encode
+                const base64 = btoa(minifiedCode);
+
+                // 5. Output results
+                document.getElementById('minifiedCode').value = minifiedCode;
+                document.getElementById('base64Code').value = base64;
+
+            } catch (e) {
+                console.error(e);
+                alert("Error parsing code: " + e.message + "\n\nMake sure you pasted the full fetch(...) statement.");
+            }
+        }
+
+        function copyBase64() {
+            const copyText = document.getElementById("base64Code");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); 
+            navigator.clipboard.writeText(copyText.value);
+            alert("Copied to clipboard!");
+        }
+    </script>
+</body>
+</html>
